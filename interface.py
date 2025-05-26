@@ -3,8 +3,8 @@ import requests
 from rag_utils import build_rag_chain
 import time
 
-st.set_page_config(page_title="Assistant RAG", layout="wide")
-st.title("🤖 Assistant RAG")
+st.set_page_config(page_title="Assistant pâtissier ", layout="wide")
+st.title("Assistant pâtissier")
 st.markdown("Posez votre question sur la recette...")
 
 # =========================
