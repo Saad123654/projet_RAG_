@@ -3,23 +3,22 @@
 ############################ Importing Libraries ###########################
 
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.document_loaders import PyPDFLoader
-from langchain.embeddings import GPT4AllEmbeddings
-from langchain.vectorstores import Chroma
-from langchain.llms import GPT4All
+from langchain_community.document_loaders import PyPDFLoader
+from langchain_community.vectorstores import Chroma
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 from langchain.schema import StrOutputParser
 from langchain_core.messages import HumanMessage, AIMessage
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.runnables import RunnablePassthrough
 from datetime import datetime
-from langchain_ollama import ChatOllama
+from langchain_ollama import ChatOllama, OllamaEmbeddings
+
 
 ############################## Loading PDF File ###########################
 
 print("\nStart Loading =", datetime.now().strftime("%d/%m/%Y %H:%M:%S"))
 folder_path = './Test Input/'
-filename = 'journal_llama2.pdf'
+filename = 'recette-cookies.pdf'
 loader = PyPDFLoader(folder_path + filename, extract_images=True)
 docs = loader.load()
 print("End Loading =", datetime.now().strftime("%d/%m/%Y %H:%M:%S"))
@@ -36,9 +35,14 @@ print("first split =", splits[0].page_content.split()[:10])
 print("first split length =", len(splits[0].page_content.split()))
 print("first split metadata =", splits[0].metadata)
 
-############################## Storing The Text #############################
+############################## Embedding #############################
+embedding = OllamaEmbeddings(
+    model="llama3"
+)
 
-vectorstore = Chroma.from_documents(documents=splits, embedding=GPT4AllEmbeddings())
+############################## Storing The Text #############################
+print("Start Storing =", datetime.now().strftime("%d/%m/%Y %H:%M:%S"))
+vectorstore = Chroma.from_documents(documents=splits, embedding=embedding)
 print("Number of vectors in vectorstore =", len(vectorstore))
 
 ############################## Retrieiver ###################################
@@ -50,7 +54,7 @@ print("End Splitting-Storing-Retriever =", datetime.now().strftime("%d/%m/%Y %H:
 
 print('Importing LLM...')
 llm = ChatOllama(
-    model = "llama2",
+    model = "llama3",
     temperature = 0.8)
 
 print('Importing LLM done.')
@@ -124,21 +128,29 @@ chat_history = []
 
 ################################# Chat Loop ####################################
 
+print("Bienvenue dans votre assistant RAG. Posez vos questions ! (Tapez 'exit' pour quitter)")
+
 while True:
     question = input("You: ")
-    if question.lower() in ["exit", "quit"]:
+
+    if question.lower() in {"exit", "quit"}:
+        print("Fin de la session.")
         break
-    
-    result = rag_chain.invoke({
-        "chat_history": chat_history,
-        "question": question
-    })
-    print("AI:", result)
-    
-    retrieved_docs = retriever.get_relevant_documents(question)
-    print("Chunks pertinents :")
-    for i, doc in enumerate(retrieved_docs):
-        print(f"Chunk {i+1} (page {doc.metadata.get('page')}): {doc.page_content[:200]}...\n")
-    
-    chat_history.append(HumanMessage(content=question))
-    chat_history.append(AIMessage(content=result))
+
+    try:
+        result = rag_chain.invoke({
+            "question": question,
+            "chat_history": chat_history,
+        })
+
+        # ✅ Gérer le cas AIMessage ou str directement
+        response_text = result.content if hasattr(result, "content") else str(result)
+
+        # Mettre à jour l'historique de la conversation
+        chat_history.append(HumanMessage(content=question))
+        chat_history.append(AIMessage(content=response_text))
+
+        print("Bot:", response_text)
+
+    except Exception as e:
+        print("❌ Erreur pendant le traitement :", e)
