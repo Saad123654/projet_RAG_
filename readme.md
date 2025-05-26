@@ -32,4 +32,30 @@ L'application combine :
 
 1. Cloner le projet :
 2. Utiliser pyenv pour utiliser la bonne version de python 3.12.9
+
+```bash
+pyenv intall 3.12.9
+pyenv local 3.12.9
+```
+
 3. Installer toutes les bibliothèques avec poetry
+
+```bash
+poetry install
+```
+
+
+## Lancement de l'application
+### Lancer le serveur FastAPI 
+
+```bash
+poetry run uvicorn api:app --reload
+```
+
+
+### Lancer l’interface Streamlit
+
+```bash
+poetry run streamlit run interface.py
+```
+
