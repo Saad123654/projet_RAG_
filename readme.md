@@ -53,7 +53,7 @@ poetry run uvicorn api:app --reload
 ```
 
 
-### Lancer l’interface Streamlit
+### Lancer l’interface Streamlit dans un deuxième terminal
 
 ```bash
 poetry run streamlit run interface.py
