@@ -37,7 +37,7 @@ print("first split metadata =", splits[0].metadata)
 
 ############################## Embedding #############################
 embedding = OllamaEmbeddings(
-    model="llama3"
+    model="llama3.1"
 )
 
 ############################## Storing The Text #############################
